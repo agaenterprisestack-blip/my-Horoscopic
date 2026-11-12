@@ -1,65 +1,111 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Starfield from './components/Starfield.jsx';
-import SignPicker from './components/SignPicker.jsx';
-import DailyReading from './components/DailyReading.jsx';
-import SignProfile from './components/SignProfile.jsx';
-import { getSign } from './data/signs.js';
+import BirthForm from './components/BirthForm.jsx';
+import JathagamReport from './components/JathagamReport.jsx';
+import DailyPalan from './components/DailyPalan.jsx';
+import { findPlace, DEFAULT_PLACE } from './data/places.js';
+import { computeJathagam } from './lib/jathagam.js';
+import { localToUtc } from './lib/time.js';
+import { LangContext, nameOf } from './lib/i18n.jsx';
 
-const STORAGE_KEY = 'horoscopic:sign';
+const STORE = { profile: 'horoscopic:profile', lang: 'horoscopic:lang', rasi: 'horoscopic:rasi', tab: 'horoscopic:tab' };
 
-function loadSavedSign() {
+const load = (key, fallback) => {
   try {
-    const id = localStorage.getItem(STORAGE_KEY);
-    return getSign(id) ? id : null;
+    const v = localStorage.getItem(key);
+    return v == null ? fallback : JSON.parse(v);
   } catch {
-    return null;
+    return fallback;
   }
+};
+const save = (key, value) => {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
+};
+
+/** Resolve a saved profile's place into {name, lat, lon, tz | utcOffset}. */
+function resolvePlace(profile) {
+  if (profile?.custom) {
+    const c = profile.custom;
+    return { name: `${(+c.lat).toFixed(2)}°, ${(+c.lon).toFixed(2)}°`, lat: +c.lat, lon: +c.lon, utcOffset: +c.utcOffset };
+  }
+  return findPlace(profile?.placeName) ?? DEFAULT_PLACE;
 }
 
+const TABS = [
+  { id: 'jathagam', ta: 'ஜாதகம்', en: 'Jathagam' },
+  { id: 'palan', ta: 'ராசி பலன்', en: 'Rasi Palan' },
+];
+const LANGS = [
+  { id: 'both', label: 'தமிழ் + EN' },
+  { id: 'ta', label: 'தமிழ்' },
+  { id: 'en', label: 'English' },
+];
+
 export default function App() {
-  const [signId, setSignId] = useState(loadSavedSign);
-  const readingRef = useRef(null);
-  const sign = getSign(signId);
+  const [lang, setLang] = useState(() => load(STORE.lang, 'both'));
+  const [tab, setTab] = useState(() => load(STORE.tab, 'jathagam'));
+  const [profile, setProfile] = useState(() => load(STORE.profile, null));
+  const [editing, setEditing] = useState(() => !load(STORE.profile, null));
+  const [rasiId, setRasiId] = useState(() => load(STORE.rasi, null));
 
-  useEffect(() => {
-    try {
-      if (signId) localStorage.setItem(STORAGE_KEY, signId);
-    } catch {
-      /* storage unavailable — ignore */
-    }
-  }, [signId]);
+  useEffect(() => save(STORE.lang, lang), [lang]);
+  useEffect(() => save(STORE.tab, tab), [tab]);
+  useEffect(() => { if (rasiId != null) save(STORE.rasi, rasiId); }, [rasiId]);
 
-  const selectSign = (id) => {
-    setSignId(id);
-    requestAnimationFrame(() => readingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  const place = useMemo(() => resolvePlace(profile), [profile]);
+  const jathagam = useMemo(() => {
+    if (!profile) return null;
+    const birth = localToUtc(profile.date, profile.time, place);
+    return birth ? computeJathagam(birth, place) : null;
+  }, [profile, place]);
+
+  const handleSubmit = (p) => {
+    setProfile(p);
+    save(STORE.profile, p);
+    setEditing(false);
+    // Default the daily palan to the newly computed birth Rasi.
+    const birth = localToUtc(p.date, p.time, resolvePlace(p));
+    if (birth) setRasiId(computeJathagam(birth, resolvePlace(p)).rasi.id);
   };
 
   return (
-    <>
+    <LangContext.Provider value={lang}>
       <Starfield />
       <main className="container">
         <header className="hero">
           <h1>Horoscopic</h1>
-          <p className="tagline">Your daily guide written in the stars</p>
+          <p className="tagline" lang="ta">உங்கள் ஜாதகம் · பஞ்சாங்கம் · ராசி பலன்</p>
+          <div className="toolbar">
+            <nav className="tabs" role="tablist">
+              {TABS.map((tb) => (
+                <button key={tb.id} role="tab" aria-selected={tab === tb.id} className={tab === tb.id ? 'active' : ''} onClick={() => setTab(tb.id)}>
+                  {nameOf(tb, lang)}
+                </button>
+              ))}
+            </nav>
+            <div className="lang-toggle" role="group" aria-label="Language">
+              {LANGS.map((l) => (
+                <button key={l.id} className={lang === l.id ? 'active' : ''} onClick={() => setLang(l.id)}>{l.label}</button>
+              ))}
+            </div>
+          </div>
         </header>
 
-        <SignPicker selectedId={signId} onSelect={selectSign} />
-
-        <div ref={readingRef} className="results">
-          {sign ? (
-            <>
-              <DailyReading sign={sign} onPickSign={selectSign} />
-              <SignProfile sign={sign} />
-            </>
+        {tab === 'jathagam' &&
+          (editing || !jathagam ? (
+            <BirthForm initial={profile} onSubmit={handleSubmit} />
           ) : (
-            <p className="empty">Choose your sign above to reveal today’s horoscope ✨</p>
-          )}
-        </div>
+            <JathagamReport j={jathagam} profile={profile} onEdit={() => setEditing(true)} />
+          ))}
+
+        {tab === 'palan' && (
+          <DailyPalan rasiId={rasiId} profileRasiId={jathagam?.rasi.id} onSelect={setRasiId} place={place} />
+        )}
 
         <footer className="footer">
-          Horoscopic is for entertainment. The stars guide; you decide.
+          {nameOf({ ta: 'லஹிரி அயனாம்சம் கொண்டு கணிக்கப்பட்டது. பொழுதுபோக்கு மற்றும் வழிகாட்டலுக்கு மட்டும்.', en: 'Calculated with Lahiri ayanamsa. For guidance and entertainment.' }, lang)}
         </footer>
       </main>
-    </>
+    </LangContext.Provider>
   );
 }
