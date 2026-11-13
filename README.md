@@ -26,6 +26,14 @@ A Tamil **Jathagam** (ஜாதகம்) web app: Vedic birth chart, Panchangam
 - **Vimshottari Dasa / Bhukti**: balance at birth, full 120-year timeline, current period highlighted
 - Basic **Chevvai dosham** check, from Lagnam and from the Moon
 
+### பொருத்தம் · Marriage Porutham
+- Enter each person by **birth details** or by **natchathiram + padham** only (the rasi is worked out from the padham)
+- **All 10 poruthams:** Dina, Gana, Mahendra, Sthree Dheerga, Yoni, Rasi, Rasi Adhipathi, Vasya, Rajju and Vedhai, each with its traditional meaning
+- **Match percentage:** poruthams agreed out of 10 (½ for partial agreement), capped at 40% and marked not recommended if Rajju or Vedhai fails, and reduced by 10% if only one person has Chevvai dosham
+- Verdicts: Uthamam, Mathimam, Average, Athamam, Not recommended
+- **Chevvai dosham comparison** when both birth details are given
+- **Santhana Bhagyam (children) indicators:** Jupiter, the 5th house and its lord for each person, plus Mahendra, Yoni and Rajju for the couple, with traditional remedies. These are framed as traditional indicators, not predictions.
+
 ### ராசி பலன் · Daily Rasi Palan
 - Today's Panchangam for your place, with sunrise and sunset
 - Daily palan for your Rasi: deity, lucky direction, number and colour, favourable rasi
@@ -62,6 +70,7 @@ src/
     TodayView.jsx          today: nalla neram, rahu kalam, gowri, personal advice
     DailyPalan.jsx         daily rasi palan
     PlaceSearch.jsx        type-to-search place picker
+    PoruthamView.jsx       marriage matching and santhana indicators
   data/jathagam.js         rasis, planets, natchathirams, thithi, yogam, karanam (Tamil + English)
   data/places.js           curated places, place search and nicknames
   data/tnPlaces.js         Tamil Nadu & Puducherry places (generated from GeoNames)
@@ -69,13 +78,14 @@ src/
   lib/jathagam.js          chart assembly, panchangam, dasa, dosham
   data/daily.js            gowri, rahu kalam, soolam, tara and special-day tables
   lib/daily.js             daily calendar and personal guidance
+  data/porutham.js         gana, yoni, rajju, vedhai, vasya and friendship tables
+  lib/porutham.js          10-porutham scoring, match percentage, santhana
   lib/time.js              local time to UTC
   lib/horoscope.js         daily palan text generator
 tests/jathagam.test.js     checks against known dates (Tamil New Year, Pongal, eclipse…)
 ```
 
 ## Roadmap
-- **Porutham:** 10-porutham marriage matching
 - Search any place worldwide
 - Printable / PDF Jathagam
 - Night Gowri Panchangam and Hora timings

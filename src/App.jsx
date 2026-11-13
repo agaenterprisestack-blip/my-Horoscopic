@@ -4,6 +4,7 @@ import BirthForm from './components/BirthForm.jsx';
 import JathagamReport from './components/JathagamReport.jsx';
 import DailyPalan from './components/DailyPalan.jsx';
 import TodayView from './components/TodayView.jsx';
+import PoruthamView from './components/PoruthamView.jsx';
 import { findPlace, DEFAULT_PLACE } from './data/places.js';
 import { computeJathagam } from './lib/jathagam.js';
 import { localToUtc } from './lib/time.js';
@@ -35,6 +36,7 @@ function resolvePlace(profile) {
 const TABS = [
   { id: 'today', ta: 'இன்று', en: 'Today' },
   { id: 'jathagam', ta: 'ஜாதகம்', en: 'Jathagam' },
+  { id: 'porutham', ta: 'பொருத்தம்', en: 'Porutham' },
   { id: 'palan', ta: 'ராசி பலன்', en: 'Rasi Palan' },
 ];
 const LANGS = [
@@ -112,6 +114,8 @@ export default function App() {
           ) : (
             <JathagamReport j={jathagam} profile={profile} onEdit={() => setEditing(true)} />
           ))}
+
+        {tab === 'porutham' && <PoruthamView profile={profile} />}
 
         {tab === 'palan' && (
           <DailyPalan rasiId={rasiId} profileRasiId={jathagam?.rasi.id} onSelect={setRasiId} place={homePlace} />

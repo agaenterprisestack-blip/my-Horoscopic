@@ -150,3 +150,72 @@ test('Boundary check flags a Lagnam about to change', () => {
   assert.ok(b.lagnam?.earlier && b.lagnam.earlier.minutes <= 3);
   assert.equal(b.lagnam.earlier.rasi.en, 'Kadagam');
 });
+
+// ---------- Porutham ----------
+import { matchPoruthams, marriageScore, rasiFromStar, santhanaIndicators, coupleSanthana } from '../src/lib/porutham.js';
+import { RAJJU, GANA, VEDHAI_PAIRS } from '../src/data/porutham.js';
+import { NAKSHATRAS } from '../src/data/jathagam.js';
+
+const star = (en) => NAKSHATRAS.findIndex((n) => n.en === en);
+const person = (en, padham = 1) => ({ star: star(en), rasi: rasiFromStar(star(en), padham) });
+
+test('Rajju groups match the published table', () => {
+  const group = (names) => names.map((n) => RAJJU[star(n)]);
+  assert.deepEqual(new Set(group(['Mirugasirisham', 'Chithirai', 'Avittam'])), new Set(['siro']));
+  assert.deepEqual(new Set(group(['Rohini', 'Thiruvathirai', 'Hastham', 'Swathi', 'Thiruvonam', 'Sathayam'])), new Set(['kanta']));
+  assert.deepEqual(new Set(group(['Karthigai', 'Punarpoosam', 'Uthiram', 'Visakam', 'Uthiradam', 'Poorattathi'])), new Set(['udara']));
+  assert.deepEqual(new Set(group(['Bharani', 'Poosam', 'Pooram', 'Anusham', 'Pooradam', 'Uthirattathi'])), new Set(['kati']));
+  assert.deepEqual(new Set(group(['Aswini', 'Ayilyam', 'Magam', 'Kettai', 'Moolam', 'Revathi'])), new Set(['pada']));
+});
+
+test('Gana: 9 stars in each group', () => {
+  for (const g of ['D', 'M', 'R']) assert.equal(GANA.filter((x) => x === g).length, 9);
+  assert.equal(VEDHAI_PAIRS.length, 15);
+});
+
+test('Rasi from star + padham', () => {
+  assert.equal(rasiFromStar(star('Aswini'), 1), 0);
+  assert.equal(rasiFromStar(star('Karthigai'), 1), 0); // Karthigai 1 → Mesham
+  assert.equal(rasiFromStar(star('Karthigai'), 2), 1); // Karthigai 2–4 → Rishabam
+  assert.equal(rasiFromStar(star('Revathi'), 4), 11);
+});
+
+test('Rajju failure caps the match and is not recommended', () => {
+  const m = matchPoruthams(person('Aswini'), person('Magam')); // both Pada rajju
+  const s = marriageScore(m);
+  assert.equal(m.items.find((i) => i.id === 'rajju').score, 0);
+  assert.ok(s.percent <= 40);
+  assert.equal(s.verdict, 'notRecommended');
+});
+
+test('Vedhai pair is detected both ways', () => {
+  for (const [b, g] of [['Aswini', 'Kettai'], ['Kettai', 'Aswini']]) {
+    assert.equal(matchPoruthams(person(b), person(g)).items.find((i) => i.id === 'vedhai').score, 0);
+  }
+});
+
+test('Mahendra and Dina counts', () => {
+  const m = matchPoruthams(person('Aswini'), person('Rohini')); // count 4
+  assert.equal(m.starCount, 4);
+  assert.equal(m.items.find((i) => i.id === 'mahendra').score, 1);
+  assert.equal(m.items.find((i) => i.id === 'dina').score, 1); // 4 % 9 = 4
+});
+
+test('Percent and santhana are bounded', () => {
+  const birthB = computeJathagam(localToUtc('1996-03-10', '09:15', CHENNAI), CHENNAI);
+  const birthG = computeJathagam(localToUtc('1992-11-02', '18:40', CHENNAI), CHENNAI);
+  const m = matchPoruthams({ star: birthB.nakshatra.id, rasi: birthB.rasi.id }, { star: birthG.nakshatra.id, rasi: birthG.rasi.id });
+  const s = marriageScore(m, [birthB.chevvai.lagnam || birthB.chevvai.moon, birthG.chevvai.lagnam || birthG.chevvai.moon]);
+  assert.ok(s.percent >= 0 && s.percent <= 100);
+  const sb = santhanaIndicators(birthB), sg = santhanaIndicators(birthG);
+  for (const x of [sb, sg]) assert.ok(x.percent >= 20 && x.percent <= 95);
+  const c = coupleSanthana(m, sb, sg);
+  assert.ok(c.percent >= 0 && c.percent <= 100 && !c.partial);
+});
+
+test('Star-only santhana stays within 30–80%', () => {
+  for (const [b, g] of [['Rohini', 'Magam'], ['Aswini', 'Magam'], ['Aswini', 'Rohini']]) {
+    const c = coupleSanthana(matchPoruthams(person(b), person(g)), null, null);
+    assert.ok(c.partial && c.percent >= 30 && c.percent <= 80, `${b}-${g}: ${c.percent}`);
+  }
+});

@@ -349,3 +349,52 @@ h2, h3 { margin-top: 0; }
 .edge-warn ul { margin: 0 0 8px; padding-left: 20px; }
 .edge-warn li { margin-bottom: 6px; }
 .footer a { color: var(--muted); }
+
+/* ---------- Porutham ---------- */
+.tabs { flex-wrap: wrap; justify-content: center; }
+.couple-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.person-bride { border-top: 3px solid #ff8fc0; }
+.person-groom { border-top: 3px solid #7ec8ff; }
+.person .form-grid { margin-bottom: 12px; }
+.mode-toggle { display: inline-flex; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--panel-border); border-radius: 999px; padding: 3px; margin-bottom: 12px; }
+.mode-toggle button { background: none; border: none; border-radius: 999px; padding: 6px 14px; color: var(--muted); font-size: 0.85rem; }
+.mode-toggle button.active { background: var(--gold); color: #1a1040; font-weight: 600; }
+.person-summary { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; background: rgba(245, 197, 66, 0.08); font-weight: 600; }
+
+.match-head { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+.match-text { flex: 1; min-width: 240px; }
+.match-text h2 { margin: 0 0 4px; }
+.verdict-big { font-size: 1.25rem; font-weight: 700; margin: 0 0 4px; }
+.alert.small { font-size: 0.85rem; margin: 8px 0; }
+
+.gauge {
+  --size: 170px;
+  width: var(--size); height: var(--size); border-radius: 50%;
+  background: conic-gradient(var(--col) calc(var(--pct) * 1%), rgba(255, 255, 255, 0.08) 0);
+  display: grid; place-items: center; flex-shrink: 0; margin: 0 auto;
+}
+.gauge-small { --size: 130px; }
+.gauge-inner {
+  width: calc(var(--size) - 26px); height: calc(var(--size) - 26px); border-radius: 50%;
+  background: var(--bg-1); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+}
+.gauge-num { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+.gauge-small .gauge-num { font-size: 1.7rem; }
+.gauge-label { font-size: 0.7rem; color: var(--muted); margin-top: 4px; padding: 0 10px; }
+
+.porutham-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.porutham-table th { color: var(--gold); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; text-align: left; padding: 8px; }
+.porutham-table td { padding: 10px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); vertical-align: top; }
+.porutham-table tr.critical { background: rgba(255, 107, 107, 0.1); }
+.mark { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-weight: 700; }
+.mark-yes { background: rgba(126, 224, 129, 0.2); color: #9cf09f; }
+.mark-half { background: rgba(245, 197, 66, 0.2); color: var(--gold); }
+.mark-no { background: rgba(255, 107, 107, 0.2); color: #ff9a9a; }
+h4.sub { margin: 18px 0 6px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold); }
+
+.santhana-row { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.santhana-people { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; flex: 1; min-width: 240px; }
+.factor-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; font-size: 0.9rem; }
+.factor-list li { padding: 6px 10px; border-radius: 8px; border-left: 3px solid var(--muted); background: rgba(255, 255, 255, 0.03); }
+.factor-list li.f-good { border-left-color: #7ee081; }
+.factor-list li.f-bad { border-left-color: #ff6b6b; }
