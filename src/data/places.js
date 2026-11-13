@@ -1,8 +1,12 @@
-// Built-in birth places: latitude (+N), longitude (+E), IANA time zone.
+// Birth places: latitude (+N), longitude (+E), IANA time zone.
 // IANA zones let us apply historical offsets correctly (e.g. India's
 // wartime +6:30 in 1942–45) via the browser's Intl time-zone database.
 
-export const PLACES = [
+import { TN_PLACES } from './tnPlaces.js';
+
+// Hand-picked places (major cities, rest of India, Tamil diaspora).
+// Their `id` is the plain name, which keeps older saved profiles working.
+const CURATED = [
   // Tamil Nadu & Puducherry
   { name: 'Chennai', region: 'Tamil Nadu', lat: 13.0827, lon: 80.2707, tz: 'Asia/Kolkata' },
   { name: 'Coimbatore', region: 'Tamil Nadu', lat: 11.0168, lon: 76.9558, tz: 'Asia/Kolkata' },
@@ -26,25 +30,86 @@ export const PLACES = [
   { name: 'Hosur', region: 'Tamil Nadu', lat: 12.7409, lon: 77.8253, tz: 'Asia/Kolkata' },
   { name: 'Puducherry', region: 'Puducherry', lat: 11.9416, lon: 79.8083, tz: 'Asia/Kolkata' },
   // Rest of India
-  { name: 'Bengaluru', region: 'India', lat: 12.9716, lon: 77.5946, tz: 'Asia/Kolkata' },
-  { name: 'Hyderabad', region: 'India', lat: 17.385, lon: 78.4867, tz: 'Asia/Kolkata' },
-  { name: 'Thiruvananthapuram', region: 'India', lat: 8.5241, lon: 76.9366, tz: 'Asia/Kolkata' },
-  { name: 'Kochi', region: 'India', lat: 9.9312, lon: 76.2673, tz: 'Asia/Kolkata' },
-  { name: 'Mumbai', region: 'India', lat: 19.076, lon: 72.8777, tz: 'Asia/Kolkata' },
-  { name: 'Delhi', region: 'India', lat: 28.6139, lon: 77.209, tz: 'Asia/Kolkata' },
-  { name: 'Kolkata', region: 'India', lat: 22.5726, lon: 88.3639, tz: 'Asia/Kolkata' },
+  { name: 'Bengaluru', region: 'Karnataka', lat: 12.9716, lon: 77.5946, tz: 'Asia/Kolkata' },
+  { name: 'Hyderabad', region: 'Telangana', lat: 17.385, lon: 78.4867, tz: 'Asia/Kolkata' },
+  { name: 'Thiruvananthapuram', region: 'Kerala', lat: 8.5241, lon: 76.9366, tz: 'Asia/Kolkata' },
+  { name: 'Kochi', region: 'Kerala', lat: 9.9312, lon: 76.2673, tz: 'Asia/Kolkata' },
+  { name: 'Tirupati', region: 'Andhra Pradesh', lat: 13.6288, lon: 79.4192, tz: 'Asia/Kolkata' },
+  { name: 'Mumbai', region: 'Maharashtra', lat: 19.076, lon: 72.8777, tz: 'Asia/Kolkata' },
+  { name: 'Delhi', region: 'Delhi', lat: 28.6139, lon: 77.209, tz: 'Asia/Kolkata' },
+  { name: 'Kolkata', region: 'West Bengal', lat: 22.5726, lon: 88.3639, tz: 'Asia/Kolkata' },
   // Tamil diaspora
   { name: 'Colombo', region: 'Sri Lanka', lat: 6.9271, lon: 79.8612, tz: 'Asia/Colombo' },
   { name: 'Jaffna', region: 'Sri Lanka', lat: 9.6615, lon: 80.0255, tz: 'Asia/Colombo' },
-  { name: 'Singapore', region: 'World', lat: 1.3521, lon: 103.8198, tz: 'Asia/Singapore' },
-  { name: 'Kuala Lumpur', region: 'World', lat: 3.139, lon: 101.6869, tz: 'Asia/Kuala_Lumpur' },
-  { name: 'Dubai', region: 'World', lat: 25.2048, lon: 55.2708, tz: 'Asia/Dubai' },
-  { name: 'London', region: 'World', lat: 51.5074, lon: -0.1278, tz: 'Europe/London' },
-  { name: 'Toronto', region: 'World', lat: 43.6532, lon: -79.3832, tz: 'America/Toronto' },
-  { name: 'New York', region: 'World', lat: 40.7128, lon: -74.006, tz: 'America/New_York' },
-  { name: 'San Francisco', region: 'World', lat: 37.7749, lon: -122.4194, tz: 'America/Los_Angeles' },
-  { name: 'Sydney', region: 'World', lat: -33.8688, lon: 151.2093, tz: 'Australia/Sydney' },
-];
+  { name: 'Batticaloa', region: 'Sri Lanka', lat: 7.7102, lon: 81.6924, tz: 'Asia/Colombo' },
+  { name: 'Trincomalee', region: 'Sri Lanka', lat: 8.5874, lon: 81.2152, tz: 'Asia/Colombo' },
+  { name: 'Singapore', region: 'Singapore', lat: 1.3521, lon: 103.8198, tz: 'Asia/Singapore' },
+  { name: 'Kuala Lumpur', region: 'Malaysia', lat: 3.139, lon: 101.6869, tz: 'Asia/Kuala_Lumpur' },
+  { name: 'Penang', region: 'Malaysia', lat: 5.4141, lon: 100.3288, tz: 'Asia/Kuala_Lumpur' },
+  { name: 'Dubai', region: 'UAE', lat: 25.2048, lon: 55.2708, tz: 'Asia/Dubai' },
+  { name: 'Doha', region: 'Qatar', lat: 25.2854, lon: 51.531, tz: 'Asia/Qatar' },
+  { name: 'Muscat', region: 'Oman', lat: 23.588, lon: 58.3829, tz: 'Asia/Muscat' },
+  { name: 'London', region: 'UK', lat: 51.5074, lon: -0.1278, tz: 'Europe/London' },
+  { name: 'Paris', region: 'France', lat: 48.8566, lon: 2.3522, tz: 'Europe/Paris' },
+  { name: 'Toronto', region: 'Canada', lat: 43.6532, lon: -79.3832, tz: 'America/Toronto' },
+  { name: 'New York', region: 'USA', lat: 40.7128, lon: -74.006, tz: 'America/New_York' },
+  { name: 'New Jersey (Edison)', region: 'USA', lat: 40.5187, lon: -74.4121, tz: 'America/New_York' },
+  { name: 'Dallas', region: 'USA', lat: 32.7767, lon: -96.797, tz: 'America/Chicago' },
+  { name: 'San Francisco', region: 'USA', lat: 37.7749, lon: -122.4194, tz: 'America/Los_Angeles' },
+  { name: 'Sydney', region: 'Australia', lat: -33.8688, lon: 151.2093, tz: 'Australia/Sydney' },
+  { name: 'Melbourne', region: 'Australia', lat: -37.8136, lon: 144.9631, tz: 'Australia/Melbourne' },
+  { name: 'Auckland', region: 'New Zealand', lat: -36.8485, lon: 174.7633, tz: 'Pacific/Auckland' },
+  { name: 'Mauritius (Port Louis)', region: 'Mauritius', lat: -20.1609, lon: 57.5012, tz: 'Indian/Mauritius' },
+  { name: 'Durban', region: 'South Africa', lat: -29.8587, lon: 31.0218, tz: 'Africa/Johannesburg' },
+].map((p) => ({ ...p, id: p.name, pop: Infinity }));
 
-export const DEFAULT_PLACE = PLACES[0];
-export const findPlace = (name) => PLACES.find((p) => p.name === name);
+const curatedNames = new Set(CURATED.map((p) => p.name.toLowerCase()));
+
+// Every Tamil Nadu & Puducherry town/village from GeoNames.
+const TN = TN_PLACES
+  .filter(([name]) => !curatedNames.has(name.toLowerCase()))
+  .map(([name, district, lat, lon, pop]) => ({
+    id: `${name}, ${district}`, name, region: district, lat, lon, tz: 'Asia/Kolkata', pop,
+  }));
+
+export const PLACES = [...CURATED, ...TN];
+export const CURATED_PLACES = CURATED;
+export const DEFAULT_PLACE = CURATED[0];
+
+const byId = new Map(PLACES.map((p) => [p.id, p]));
+export const findPlace = (id) => (id ? byId.get(id) ?? null : null);
+
+// Common Tamil / old / short names → the name we store.
+const ALIASES = {
+  madras: 'chennai', trichy: 'tiruchirappalli', tiruchi: 'tiruchirappalli', kovai: 'coimbatore',
+  nellai: 'tirunelveli', tuticorin: 'thoothukudi', thoothukkudi: 'thoothukudi', pondicherry: 'puducherry',
+  pondy: 'puducherry', ooty: 'ooty', udhagamandalam: 'ooty', kanyakumari: 'kanniyakumari',
+  kanchi: 'kanchipuram', kancheepuram: 'kanchipuram', tanjore: 'thanjavur', thanjai: 'thanjavur',
+  bangalore: 'bengaluru', trivandrum: 'thiruvananthapuram', cochin: 'kochi', bombay: 'mumbai',
+  calcutta: 'kolkata', tiruvannamalai: 'tiruvannamalai', thiruvannamalai: 'tiruvannamalai',
+  rameshwaram: 'rameswaram', palani: 'palani', pazhani: 'palani', kodai: 'kodaikanal',
+};
+
+const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '');
+
+/** Search places by name (and district). Returns the best `limit` matches. */
+export function searchPlaces(query, limit = 8) {
+  const raw = norm(query);
+  if (!raw) return [];
+  const q = norm(ALIASES[raw] ?? raw);
+  const scored = [];
+  for (const p of PLACES) {
+    const n = norm(p.name);
+    let score = -1;
+    if (n === q || n === raw) score = 0;
+    else if (n.startsWith(q) || n.startsWith(raw)) score = 1;
+    else if (n.includes(q)) score = 2;
+    else if (norm(p.region).startsWith(q)) score = 3;
+    if (score >= 0) scored.push([score, -p.pop, p]);
+  }
+  scored.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  return scored.slice(0, limit).map((s) => s[2]);
+}
+
+/** Display label: "Name, District" (district omitted if it repeats the name). */
+export const placeLabel = (p) => (p.region && norm(p.region) !== norm(p.name) ? `${p.name}, ${p.region}` : p.name);

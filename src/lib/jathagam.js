@@ -176,3 +176,38 @@ export function todayAt(place, date = new Date()) {
  * traditionally a day to avoid new ventures.
  */
 export const isChandrashtamam = (birthRasiId, moonRasiId) => houseFrom(birthRasiId, moonRasiId) === 8;
+
+/**
+ * How close is the chart to a boundary? Checks whether the Lagnam rasi or the
+ * Moon's natchathiram would change if the birth time were a little earlier or
+ * later (birth-time error, or a different birth town, has the same effect).
+ * Returns null for each item that is safe within the window.
+ */
+export function boundaryCheck(birth, place) {
+  const scan = (valueAt, maxMin, step) => {
+    const now = valueAt(birth);
+    const find = (dir) => {
+      for (let m = step; m <= maxMin; m += step) {
+        const v = valueAt(new Date(birth.getTime() + dir * m * 60000));
+        if (v !== now) return { minutes: m, value: v };
+      }
+      return null;
+    };
+    const earlier = find(-1);
+    const later = find(+1);
+    return earlier || later ? { earlier, later } : null;
+  };
+
+  const lagna = scan((d) => rasiOf(siderealAscendant(d, place.lat, place.lon)), 15, 1);
+  const star = scan((d) => nakshatraOf(siderealLongitude('moon', d)).nakshatra.id, 60, 5);
+  return {
+    lagnam: lagna && {
+      earlier: lagna.earlier && { minutes: lagna.earlier.minutes, rasi: RASIS[lagna.earlier.value] },
+      later: lagna.later && { minutes: lagna.later.minutes, rasi: RASIS[lagna.later.value] },
+    },
+    nakshatra: star && {
+      earlier: star.earlier && { minutes: star.earlier.minutes, nakshatra: NAKSHATRAS[star.earlier.value] },
+      later: star.later && { minutes: star.later.minutes, nakshatra: NAKSHATRAS[star.later.value] },
+    },
+  };
+}

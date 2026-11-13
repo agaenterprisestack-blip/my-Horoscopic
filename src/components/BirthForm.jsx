@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { PLACES } from '../data/places.js';
+import { findPlace } from '../data/places.js';
+import PlaceSearch from './PlaceSearch.jsx';
 import { useLang, nameOf } from '../lib/i18n.jsx';
 
 const CUSTOM = '__custom__';
@@ -9,7 +10,9 @@ const T = {
   date: { ta: 'பிறந்த தேதி', en: 'Date of birth' },
   time: { ta: 'பிறந்த நேரம்', en: 'Time of birth' },
   place: { ta: 'பிறந்த ஊர்', en: 'Place of birth' },
-  other: { ta: 'வேறு இடம் (அட்சரேகை/தீர்க்கரேகை)', en: 'Other place (enter coordinates)' },
+  other: { ta: 'ஊர் பட்டியலில் இல்லையா? அட்சரேகை/தீர்க்கரேகை உள்ளிடவும்', en: 'Place not listed? Enter coordinates' },
+  back: { ta: 'ஊர் பெயரால் தேடு', en: 'Search by place name' },
+  search: { ta: 'ஊர் பெயரை தட்டச்சு செய்யவும் (எ.கா. Trichy)', en: 'Type a town (e.g. Trichy, Kovai)' },
   lat: { ta: 'அட்சரேகை', en: 'Latitude (+N)' },
   lon: { ta: 'தீர்க்கரேகை', en: 'Longitude (+E)' },
   offset: { ta: 'UTC நேர வித்தியாசம் (மணி)', en: 'UTC offset (hours)' },
@@ -29,14 +32,12 @@ export default function BirthForm({ initial, onSubmit }) {
   const [custom, setCustom] = useState(initial?.custom ?? { lat: '', lon: '', utcOffset: '5.5' });
   const [error, setError] = useState('');
 
-  const regions = [...new Set(PLACES.map((p) => p.region))];
-
   const submit = (e) => {
     e.preventDefault();
     const isCustom = placeName === CUSTOM;
     const c = { lat: parseFloat(custom.lat), lon: parseFloat(custom.lon), utcOffset: parseFloat(custom.utcOffset) };
     const customOk = Math.abs(c.lat) <= 66 && Math.abs(c.lon) <= 180 && Math.abs(c.utcOffset) <= 14;
-    if (!date || !time || (isCustom && !customOk)) {
+    if (!date || !time || (isCustom ? !customOk : !findPlace(placeName))) {
       setError(t('error'));
       return;
     }
@@ -60,19 +61,17 @@ export default function BirthForm({ initial, onSubmit }) {
           <span>{t('time')}</span>
           <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} />
         </label>
-        <label>
-          <span>{t('place')}</span>
-          <select value={placeName} onChange={(e) => setPlaceName(e.target.value)}>
-            {regions.map((r) => (
-              <optgroup key={r} label={r}>
-                {PLACES.filter((p) => p.region === r).map((p) => (
-                  <option key={p.name} value={p.name}>{p.name}</option>
-                ))}
-              </optgroup>
-            ))}
-            <option value={CUSTOM}>{t('other')}</option>
-          </select>
-        </label>
+        <div className="field">
+          <label htmlFor="birth-place">{t('place')}</label>
+          {placeName === CUSTOM ? (
+            <button type="button" className="text-btn" onClick={() => setPlaceName('Chennai')}>{t('back')}</button>
+          ) : (
+            <>
+              <PlaceSearch inputId="birth-place" value={findPlace(placeName)} onChange={(p) => setPlaceName(p.id)} placeholder={t('search')} />
+              <button type="button" className="text-btn" onClick={() => setPlaceName(CUSTOM)}>{t('other')}</button>
+            </>
+          )}
+        </div>
         {placeName === CUSTOM && (
           <>
             <label>

@@ -3,8 +3,22 @@
 A Tamil **Jathagam** (ஜாதகம்) web app: Vedic birth chart, Panchangam and daily Rasi Palan, in Tamil and English. Built with React + Vite. All calculations run in the browser; no backend.
 
 ## Features
+### இன்று · Today (daily calendar)
+- **Nalla Neram:** good Gowri periods outside Rahu Kalam and Yamagandam, plus Abhijit Muhurtham
+- **Times to avoid:** Rahu Kalam, Yamagandam, Kuligai, and Soolam with its parigaram
+- **Gowri Panchangam (daytime):** weekday tables from the Pambu Panchangam (via Drik Panchang), with the running period highlighted
+- **Panchangam:** Thithi and Natchathiram with end times, Yogam, Karanam, sunrise and sunset
+- **Special days:** Pournami, Amavasai, Ekadasi, Pradosham, Sashti, Chathurthi, Sankatahara, Shivarathri, Karthigai, Thiruvonam, Ashtami and Navami
+- **Personal guidance from your Jathagam:** Tara balam, Chandra balam, Chandrashtamam, running Dasa/Bhukti, a day verdict, the best time for important work, and remedies
+- Move to the previous or next day; choose your current city
+- Tested against Drik Panchang for New Delhi, 13 Nov 2026
+
 ### ஜாதகம் · Jathagam (birth chart)
-- Birth details: name, date, time, place (Tamil Nadu cities, India, diaspora cities, or custom coordinates)
+- Birth details: name, date, time and place
+  - **Search 1,100+ places:** every Tamil Nadu and Puducherry town and village from GeoNames, plus major Indian and Tamil-diaspora cities
+  - Understands common names: Trichy, Kovai, Nellai, Madras, Pondy, Tanjore, Tuticorin…
+  - Or enter coordinates by hand
+- **Boundary warning:** shows when a few minutes of birth-time error (or a different town) would change the Lagnam or the birth star
 - **Rasi chart** and **Navamsam chart** in the South Indian style
 - **Lagnam**, **Rasi** (Moon sign), **Natchathiram + Padham**
 - Birth Panchangam: Tamil month, day (counted from sunrise), Thithi, Yogam, Karanam
@@ -45,11 +59,16 @@ src/
     JathagamReport.jsx     summary, charts, planet table, dosham
     RasiChart.jsx          South Indian chart grid
     DasaTimeline.jsx       Vimshottari dasa / bhukti
-    DailyPalan.jsx         today's panchangam + rasi palan
+    TodayView.jsx          today: nalla neram, rahu kalam, gowri, personal advice
+    DailyPalan.jsx         daily rasi palan
+    PlaceSearch.jsx        type-to-search place picker
   data/jathagam.js         rasis, planets, natchathirams, thithi, yogam, karanam (Tamil + English)
-  data/places.js           birth places with coordinates and time zones
+  data/places.js           curated places, place search and nicknames
+  data/tnPlaces.js         Tamil Nadu & Puducherry places (generated from GeoNames)
   lib/astro.js             sidereal planet and Lagnam calculations
   lib/jathagam.js          chart assembly, panchangam, dasa, dosham
+  data/daily.js            gowri, rahu kalam, soolam, tara and special-day tables
+  lib/daily.js             daily calendar and personal guidance
   lib/time.js              local time to UTC
   lib/horoscope.js         daily palan text generator
 tests/jathagam.test.js     checks against known dates (Tamil New Year, Pongal, eclipse…)
@@ -59,5 +78,8 @@ tests/jathagam.test.js     checks against known dates (Tamil New Year, Pongal, e
 - **Porutham:** 10-porutham marriage matching
 - Search any place worldwide
 - Printable / PDF Jathagam
-- Rahu Kalam, Yamagandam and Nalla Neram in the daily panchangam
+- Night Gowri Panchangam and Hora timings
 - Gochara palan: daily palan based on real planetary transits
+
+## Credits
+Place data © [GeoNames](https://www.geonames.org), licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).

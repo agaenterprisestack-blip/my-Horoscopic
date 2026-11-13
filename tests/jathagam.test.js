@@ -87,3 +87,66 @@ test('Full Jathagam computes every field', () => {
   assert.equal(j.tamilMonth.en, 'Aadi'); // Sun in sidereal Kadagam in mid-August
   assert.equal(j.weekday.en, 'Sevvai (Tuesday)'); // 15 Aug 1995 was a Tuesday, born after sunrise
 });
+
+// ---------- Daily calendar (verified against drikpanchang.com, New Delhi, 13 Nov 2026) ----------
+import { computeDay, personalDay } from '../src/lib/daily.js';
+
+const DELHI = { name: 'New Delhi', lat: 28.6139, lon: 77.209, tz: 'Asia/Kolkata' };
+
+test('Daily calendar matches Drik Panchang (New Delhi, 13 Nov 2026)', () => {
+  const d = computeDay('2026-11-13', DELHI);
+  assert.equal(d.weekday.en, 'Velli (Friday)');
+  assert.ok(minutesApart(d.sunrise, new Date('2026-11-13T06:42+05:30')) <= 1.5);
+  assert.ok(minutesApart(d.sunset, new Date('2026-11-13T17:28+05:30')) <= 1.5);
+  assert.deepEqual(d.gowri.map((g) => g.key), ['sugam', 'soram', 'uthi', 'visham', 'amirdha', 'rogam', 'laabam', 'dhanam']);
+  assert.ok(minutesApart(d.rahu.start, new Date('2026-11-13T10:44+05:30')) <= 1.5);
+  assert.ok(minutesApart(d.yama.start, new Date('2026-11-13T14:47+05:30')) <= 1.5);
+  assert.ok(minutesApart(d.kuligai.start, new Date('2026-11-13T08:03+05:30')) <= 1.5);
+  assert.equal(d.thithi.en, 'Chathurthi');
+  assert.ok(minutesApart(d.thithiEnds, new Date('2026-11-13T20:42+05:30')) <= 1.5);
+  assert.equal(d.nakshatra.en, 'Moolam');
+  assert.ok(minutesApart(d.starEnds, new Date('2026-11-13T17:17+05:30')) <= 1.5);
+  assert.equal(d.yogam.en, 'Dhruthi');
+  // Nalla Neram excludes Rahu Kalam and Yamagandam slots.
+  assert.ok(d.nallaNeram.every((g) => g.quality !== 'bad' && g.n !== d.rahu.n && g.n !== d.yama.n));
+});
+
+test('Personal day: Chandrashtamam and tara counting', () => {
+  const d = computeDay('2026-11-13', DELHI); // Moon in Dhanusu, star Moolam
+  const fake = (rasiId, starId) => ({
+    rasi: { id: rasiId }, nakshatra: { id: starId },
+    dasa: { dasas: [] },
+  });
+  // Moon in Dhanusu (8) is the 8th from Rishabam (1).
+  assert.ok(personalDay(d, fake(1, 3)).chandrashtamam);
+  assert.equal(personalDay(d, fake(8, 18)).tara.en, 'Janma'); // born in Moolam
+  assert.equal(personalDay(d, fake(8, 17)).tara.en, 'Sampat'); // born in Kettai
+});
+
+// ---------- Places & boundary warnings ----------
+import { searchPlaces, findPlace, PLACES } from '../src/data/places.js';
+import { boundaryCheck } from '../src/lib/jathagam.js';
+
+test('Place search: names, nicknames and districts', () => {
+  assert.ok(PLACES.length > 1000);
+  assert.equal(searchPlaces('Trichy')[0].name, 'Tiruchirappalli');
+  assert.equal(searchPlaces('kovai')[0].name, 'Coimbatore');
+  assert.equal(searchPlaces('Pondicherry')[0].name, 'Puducherry');
+  assert.equal(searchPlaces('ooty')[0].name, 'Ooty');
+  assert.equal(searchPlaces('kodaik')[0].name, 'Kodaikanal');
+  assert.ok(searchPlaces('Rameswaram')[0].region === 'Ramanathapuram');
+  assert.equal(findPlace('Chennai').name, 'Chennai'); // old saved profiles still resolve
+  assert.equal(searchPlaces('').length, 0);
+});
+
+test('Boundary check flags a Lagnam about to change', () => {
+  const chennai = findPlace('Chennai');
+  // Far from any boundary: Simmam ~12°.
+  assert.equal(boundaryCheck(localToUtc('1995-08-15', '07:00', chennai), chennai).lagnam, null);
+  // Find an instant just after Lagnam changes, then confirm it is flagged.
+  const t0 = localToUtc('1995-08-15', '06:00', chennai);
+  const changeAt = crossing(t0, new Date(t0.getTime() + 3 * 3600e3), (d) => Math.floor(siderealAscendant(d, chennai.lat, chennai.lon) / 30) === 4);
+  const b = boundaryCheck(new Date(changeAt.getTime() + 2 * 60000), chennai);
+  assert.ok(b.lagnam?.earlier && b.lagnam.earlier.minutes <= 3);
+  assert.equal(b.lagnam.earlier.rasi.en, 'Kadagam');
+});

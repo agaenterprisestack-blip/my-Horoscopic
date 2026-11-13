@@ -1,7 +1,9 @@
 import RasiChart from './RasiChart.jsx';
 import DasaTimeline from './DasaTimeline.jsx';
 import { LAGNAM, getPlanet } from '../data/jathagam.js';
-import { formatDegree } from '../lib/jathagam.js';
+import { formatDegree, boundaryCheck } from '../lib/jathagam.js';
+import { placeLabel } from '../data/places.js';
+import { useMemo } from 'react';
 import { formatAtPlace, formatOffset, placeOffsetMinutes } from '../lib/time.js';
 import { useLang, nameOf, N } from '../lib/i18n.jsx';
 
@@ -34,6 +36,13 @@ const T = {
   },
   ayanamsa: { ta: 'அயனாம்சம் (லஹிரி)', en: 'Ayanamsa (Lahiri)' },
   edit: { ta: 'விவரங்களை மாற்று', en: 'Edit details' },
+  warnTitle: { ta: 'கவனம்: எல்லைக்கு அருகில்', en: 'Check: close to a boundary' },
+  warnLagnam: { ta: 'லக்னம் ராசி எல்லைக்கு அருகில் உள்ளது. பிறந்த நேரம்', en: 'Your Lagnam is near the edge of a rasi. If the birth time were' },
+  warnStar: { ta: 'சந்திரன் நட்சத்திர எல்லைக்கு அருகில் உள்ளது (தசா இருப்பும் மாறும்). பிறந்த நேரம்', en: 'The Moon is near the edge of a natchathiram (this also changes the dasa). If the birth time were' },
+  minEarlier: { ta: 'நிமிடம் முன்பு என்றால்', en: 'minutes earlier' },
+  minLater: { ta: 'நிமிடம் பின்பு என்றால்', en: 'minutes later' },
+  becomes: { ta: 'ஆகும்', en: 'it would be' },
+  warnAdvice: { ta: 'பிறந்த நேரத்தையும் ஊரையும் (பிறப்புச் சான்றிதழ்) சரிபார்க்கவும்.', en: 'Please double-check the exact birth time and town (e.g. from the birth certificate).' },
 };
 
 const dms = (deg) => {
@@ -64,19 +73,53 @@ export default function JathagamReport({ j, profile, onEdit }) {
   ];
 
   const hasDosham = j.chevvai.lagnam || j.chevvai.moon;
+  const edge = useMemo(() => boundaryCheck(j.birth, j.place), [j]);
+
+  // One full sentence per language (bilingual mode shows Tamil, then English).
+  const sentence = (key, info, itemKey, L) => {
+    const parts = [['earlier', 'minEarlier'], ['later', 'minLater']]
+      .filter(([dir]) => info[dir])
+      .map(([dir, label]) => {
+        const target = nameOf(info[dir][itemKey], L);
+        return L === 'en'
+          ? `${info[dir].minutes} ${T[label].en}, ${T.becomes.en} ${target}`
+          : `${info[dir].minutes} ${T[label].ta}, ${target} ${T.becomes.ta}`;
+      });
+    return `${nameOf(T[key], L)} ${parts.join(L === 'en' ? ' — or ' : ' / ')}.`;
+  };
+  const edgeLine = (key, info, itemKey) => (
+    <li>
+      {lang === 'both' ? (
+        <>{sentence(key, info, itemKey, 'ta')}<br /><span className="en-sub">{sentence(key, info, itemKey, 'en')}</span></>
+      ) : (
+        sentence(key, info, itemKey, lang)
+      )}
+    </li>
+  );
 
   return (
     <div className="report">
       <section className="panel report-head">
         <div>
           <h2>{profile.name || nameOf({ ta: 'ஜாதகம்', en: 'Jathagam' }, lang)}</h2>
-          <p className="muted">{localBirth} ({offset}) · {j.place.name}</p>
+          <p className="muted">{localBirth} ({offset}) · {placeLabel(j.place)}</p>
           <p className="muted small">
             {j.place.lat.toFixed(4)}°, {j.place.lon.toFixed(4)}° · {t('ayanamsa')}: {dms(j.ayanamsa)}
           </p>
         </div>
         <button className="btn ghost" onClick={onEdit}>{t('edit')}</button>
       </section>
+
+      {(edge.lagnam || edge.nakshatra) && (
+        <section className="panel edge-warn" role="note">
+          <h3>⚠ {t('warnTitle')}</h3>
+          <ul>
+            {edge.lagnam && edgeLine('warnLagnam', edge.lagnam, 'rasi')}
+            {edge.nakshatra && edgeLine('warnStar', edge.nakshatra, 'nakshatra')}
+          </ul>
+          <p className="muted small">{t('warnAdvice')}</p>
+        </section>
+      )}
 
       <section className="summary-grid">
         {summary.map(([k, v]) => (

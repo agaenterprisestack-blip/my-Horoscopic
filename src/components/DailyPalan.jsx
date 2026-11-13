@@ -2,8 +2,6 @@ import { useMemo } from 'react';
 import { RASIS, ELEMENT_COLORS } from '../data/jathagam.js';
 import { getDailyPalan } from '../lib/horoscope.js';
 import { todayAt, isChandrashtamam, houseFrom } from '../lib/jathagam.js';
-import { sunTimes } from '../lib/astro.js';
-import { formatAtPlace } from '../lib/time.js';
 import { useLang, nameOf, N } from '../lib/i18n.jsx';
 
 const T = {
@@ -48,34 +46,11 @@ export default function DailyPalan({ rasiId, profileRasiId, onSelect, place }) {
 
   const now = useMemo(() => new Date(), []);
   const today = useMemo(() => todayAt(place, now), [place, now]);
-  const sun = useMemo(() => sunTimes(now, place.lat, place.lon), [place, now]);
   const rasi = rasiId != null ? RASIS[rasiId] : null;
   const palan = useMemo(() => (rasi ? getDailyPalan(rasi.id, now) : null), [rasi, now]);
-  const time = (d) => (d ? formatAtPlace(d, place, { timeStyle: 'short' }) : '—');
-
-  const panchangam = [
-    ['month', <N item={today.tamilMonth} />],
-    ['day', <N item={today.weekday} />],
-    ['thithi', <><N item={today.paksha} /> <N item={today.thithi} /></>],
-    ['star', <N item={today.nakshatra} />],
-    ['yogam', <N item={today.yogam} />],
-    ['karanam', <N item={today.karanam} />],
-    ['moonRasi', <N item={today.moonRasi} />],
-    ['sunrise', time(sun?.sunrise)],
-    ['sunset', time(sun?.sunset)],
-  ];
 
   return (
     <div className="daily">
-      <section className="panel">
-        <h3>{t('today')} <span className="muted small">— {now.toLocaleDateString('en-GB', { dateStyle: 'long' })}, {place.name}</span></h3>
-        <div className="summary-grid">
-          {panchangam.map(([k, v]) => (
-            <div key={k} className="stat"><span className="label">{t(k)}</span><span className="value">{v}</span></div>
-          ))}
-        </div>
-      </section>
-
       <h3 className="section-title">{t('pick')}</h3>
       <div className="sign-grid">
         {RASIS.map((r) => (
